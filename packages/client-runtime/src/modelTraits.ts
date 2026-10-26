@@ -103,6 +103,11 @@ export function getTraitSelectChange(
   };
 }
 
+export interface TraitsGauge {
+  readonly reasoning: { readonly level: number; readonly levels: number } | null;
+  readonly speed: "fast" | "ultrafast" | null;
+}
+
 export function buildTraitsTriggerDisplay(input: {
   provider: ProviderDriverKind;
   descriptors: ReadonlyArray<ProviderOptionDescriptor>;
@@ -110,9 +115,10 @@ export function buildTraitsTriggerDisplay(input: {
   ultrathinkPromptControlled: boolean;
   modelSelection?: ModelSelection | null;
   reportedModelSelection?: ModelSelection | null | undefined;
-}): { label: string } {
+}): { label: string; gauge: TraitsGauge } {
   let fastModeFallbackLabel: string | null = null;
-  let speedLabel: string | null = null;
+  let speedLabel: "Fast" | "Ultrafast" | null = null;
+  let reasoning: TraitsGauge["reasoning"] = null;
   let reasoningLabelIndex = -1;
   const labels: Array<string> = [];
   for (const descriptor of input.descriptors) {
@@ -145,6 +151,22 @@ export function buildTraitsTriggerDisplay(input: {
         continue;
       }
     }
+    if (
+      reasoning === null &&
+      descriptor.type === "select" &&
+      REASONING_SELECT_DESCRIPTOR_IDS.has(descriptor.id)
+    ) {
+      const value =
+        input.ultrathinkPromptControlled && descriptor.id === input.primarySelectDescriptorId
+          ? descriptor.promptInjectedValues?.[0]
+          : getProviderOptionCurrentValue(
+              descriptor,
+              input.modelSelection,
+              input.reportedModelSelection,
+            );
+      const level = descriptor.options.findIndex((option) => option.id === value);
+      if (level >= 0) reasoning = { level, levels: descriptor.options.length };
+    }
     const label =
       input.ultrathinkPromptControlled && descriptor.id === input.primarySelectDescriptorId
         ? "Ultrathink"
@@ -167,8 +189,12 @@ export function buildTraitsTriggerDisplay(input: {
     }
   }
 
+  const gauge: TraitsGauge = {
+    reasoning,
+    speed: speedLabel === "Ultrafast" ? "ultrafast" : speedLabel === "Fast" ? "fast" : null,
+  };
   if (labels.length === 0 && fastModeFallbackLabel !== null) {
-    return { label: fastModeFallbackLabel };
+    return { label: fastModeFallbackLabel, gauge };
   }
   if (speedLabel) {
     if (reasoningLabelIndex >= 0) {
@@ -177,5 +203,5 @@ export function buildTraitsTriggerDisplay(input: {
       labels.push(speedLabel);
     }
   }
-  return { label: labels.join(" · ") };
+  return { label: labels.join(" · "), gauge };
 }
