@@ -93,7 +93,13 @@ function EnvironmentRenameForm({
   };
 
   return (
-    <>
+    <form
+      className="flex min-h-0 flex-col"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
       <DialogHeader>
         <DialogTitle>Rename environment</DialogTitle>
         <DialogDescription>
@@ -110,12 +116,6 @@ function EnvironmentRenameForm({
             maxLength={64}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                submit();
-              }
-            }}
           />
         </div>
         {lock !== null ? <p className="text-xs text-muted-foreground">{lock}</p> : null}
@@ -123,6 +123,7 @@ function EnvironmentRenameForm({
       <DialogFooter>
         {customLabel !== null ? (
           <Button
+            type="button"
             variant="ghost"
             className="sm:mr-auto"
             disabled={lock !== null}
@@ -131,13 +132,13 @@ function EnvironmentRenameForm({
             Use default name
           </Button>
         ) : null}
-        <Button variant="outline" onClick={onClose}>
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={lock !== null} onClick={submit}>
+        <Button type="submit" disabled={lock !== null}>
           Save
         </Button>
       </DialogFooter>
-    </>
+    </form>
   );
 }
