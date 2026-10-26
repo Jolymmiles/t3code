@@ -1,5 +1,5 @@
 import { SessionPermissions } from "./SessionPermissions";
-import { ChevronRightIcon, EllipsisIcon } from "lucide-react";
+import { ChevronRightIcon, EllipsisIcon, PencilIcon } from "lucide-react";
 import { useAtomValue } from "@effect/atom-react";
 import { useState } from "react";
 import {
@@ -35,6 +35,7 @@ import { SettingsPageContainer, SettingsRow, SettingsSection } from "./settingsL
 import { LocalEnvironmentSetting } from "./LocalEnvironmentSetting";
 import { searchableSetting } from "./settingsSearch";
 import { EnvironmentIconMenu } from "./EnvironmentIconPicker";
+import { EnvironmentRenameDialog } from "./EnvironmentRenameDialog";
 import { FoldedSettingsSection } from "./FoldedSettingsSection";
 import { LoadBalancingSettings } from "./LoadBalancingSettings";
 import { PullRequestRoutingSettings } from "./PullRequestRoutingSettings";
@@ -61,7 +62,7 @@ import {
 } from "../ui/alert-dialog";
 import { Spinner } from "../ui/spinner";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
-import { Menu, MenuPopup, MenuTrigger } from "../ui/menu";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Switch } from "../ui/switch";
 import { stackedThreadToast, toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
@@ -235,6 +236,7 @@ export function ConnectionsSettings() {
   >(null);
   const [isRevokingOtherDesktopClients, setIsRevokingOtherDesktopClients] = useState(false);
   const [addBackendDialogOpen, setAddBackendDialogOpen] = useState(false);
+  const [renamePrimaryOpen, setRenamePrimaryOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState<EnvironmentPresentation | null>(null);
   const [savedBackendError, setSavedBackendError] = useState<string | null>(null);
   const handleAddBackendDialogOpenChange = (open: boolean) => {
@@ -1046,26 +1048,39 @@ export function ConnectionsSettings() {
             }
             headerAction={
               primaryEnvironmentId !== null ? (
-                <Menu>
-                  <MenuTrigger
-                    render={
-                      <Button
-                        type="button"
-                        variant="ghost-muted"
-                        size="icon-xs"
-                        aria-label="More actions for this machine"
+                <>
+                  <Menu>
+                    <MenuTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost-muted"
+                          size="icon-xs"
+                          aria-label="More actions for this machine"
+                        />
+                      }
+                    >
+                      <EllipsisIcon className="size-3.5" />
+                    </MenuTrigger>
+                    <MenuPopup align="end">
+                      <EnvironmentIconMenu
+                        environmentId={primaryEnvironmentId}
+                        serverConfig={primaryServerConfig}
                       />
-                    }
-                  >
-                    <EllipsisIcon className="size-3.5" />
-                  </MenuTrigger>
-                  <MenuPopup align="end">
-                    <EnvironmentIconMenu
-                      environmentId={primaryEnvironmentId}
-                      serverConfig={primaryServerConfig}
-                    />
-                  </MenuPopup>
-                </Menu>
+                      <MenuItem onClick={() => setRenamePrimaryOpen(true)}>
+                        <PencilIcon />
+                        Rename…
+                      </MenuItem>
+                    </MenuPopup>
+                  </Menu>
+                  <EnvironmentRenameDialog
+                    environmentId={primaryEnvironmentId}
+                    serverConfig={primaryServerConfig}
+                    label={primaryEnvironment?.label ?? ""}
+                    open={renamePrimaryOpen}
+                    onOpenChange={setRenamePrimaryOpen}
+                  />
+                </>
               ) : null
             }
           >

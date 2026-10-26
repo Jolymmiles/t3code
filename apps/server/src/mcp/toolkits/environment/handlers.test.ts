@@ -95,3 +95,48 @@ it.effect("refuses a preferences update when the caller's turn ends while it wai
     );
   }),
 );
+
+it.effect("reads the environment by its custom name", () =>
+  Effect.gen(function* () {
+    const layerDependencies = Layer.mergeAll(
+      ThreadCommandExecutor.layer,
+      Layer.succeed(McpInvocationContext.McpInvocationContext, {
+        environmentId,
+        requestNamespace: "provider:preferences",
+        thread: undefined,
+        client: undefined,
+        capabilities: new Set(["orchestration" as const]),
+        issuedAt: 0,
+      }),
+      Layer.mock(ThreadManagement.ThreadManagementService)({}),
+      Layer.mock(Environment.ServerEnvironment)({
+        getDescriptor: Effect.succeed({
+          environmentId,
+          label: "devbox",
+          platform: { os: "linux", arch: "x64" },
+          serverVersion: "0.0.0",
+          capabilities: { repositoryIdentity: false },
+        }),
+      }),
+      Layer.mock(Settings.ServerSettingsService)({
+        getSettings: Effect.succeed({
+          ...DEFAULT_SERVER_SETTINGS,
+          environmentLabel: "MacBook Pro · user2",
+        }),
+      }),
+    );
+    const result = yield* Effect.gen(function* () {
+      const toolkit = yield* EnvironmentToolkit;
+      return yield* toolkit
+        .handle("t3_environment_read", {})
+        .pipe(Stream.unwrap, Stream.runCollect);
+    }).pipe(
+      Effect.provide(
+        McpToolAccess.HandlersLayer.layer(EnvironmentHandlers.layer).pipe(
+          Layer.provideMerge(layerDependencies),
+        ),
+      ),
+    );
+    expect(result.at(-1)?.result).toMatchObject({ label: "MacBook Pro · user2" });
+  }),
+);

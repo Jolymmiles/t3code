@@ -28,8 +28,10 @@ function presentation(
   endpoint: string = environmentId,
   serverConfig: ServerConfig | null = null,
 ): EnvironmentPresentation {
+  const entry = { target: target(environmentId, endpoint), profile: Option.none(), enabled: true };
   return {
-    entry: { target: target(environmentId, endpoint), profile: Option.none(), enabled: true },
+    entry,
+    label: entry.target.label,
     connection: { phase: "connected", error: null, traceId: null },
     serverConfig,
   };

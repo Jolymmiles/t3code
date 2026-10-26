@@ -49,15 +49,18 @@ export function ConnectionEnvironmentRow(props: {
     updates: { readonly label: string; readonly displayUrl: string },
   ) => Promise<AtomCommandResult<unknown, unknown>>;
 }) {
-  const [label, setLabel] = useState(props.environment.environmentLabel);
+  const presentation = useAtomValue(
+    environmentPresentations.presentationAtom(props.environment.environmentId),
+  );
+  // Edit the saved label; the displayed one may be the environment's own custom name.
+  const [label, setLabel] = useState(
+    presentation?.entry.target.label ?? props.environment.environmentLabel,
+  );
   const [url, setUrl] = useState(props.environment.displayUrl);
   const serverConfig = useAtomValue(
     serverEnvironment.configValueAtom(props.environment.environmentId),
   );
   const unsupported = props.environment.connectionState === "unsupported";
-  const presentation = useAtomValue(
-    environmentPresentations.presentationAtom(props.environment.environmentId),
-  );
   const canRetry = presentation !== null && hasSavedBearerRoute(presentation.entry);
   const { diagnosis, state: connectionState } = useConnectionDiagnosis(
     props.environment.environmentId,
