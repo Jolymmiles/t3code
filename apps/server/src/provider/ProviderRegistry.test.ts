@@ -39,7 +39,7 @@ import { createModelCapabilities } from "@t3tools/shared/model";
 import { applyServerSettingsPatch } from "@t3tools/shared/serverSettings";
 
 import { checkCodexProviderStatus, type CodexAppServerProviderSnapshot } from "./CodexProvider.ts";
-import { checkClaudeProviderStatus } from "./ClaudeProvider.ts";
+import { checkClaudeProviderStatus, type ClaudeCapabilitiesProbe } from "./ClaudeProvider.ts";
 import * as BackgroundPolicy from "../background/BackgroundPolicy.ts";
 import * as AntigravityInstallation from "./AntigravityInstallation.ts";
 import * as ModelManifest from "./ModelManifest.ts";
@@ -166,6 +166,7 @@ type TestClaudeCapabilities = {
   readonly apiKeySource: string | undefined;
   readonly apiProvider: string | undefined;
   readonly slashCommands: ReadonlyArray<ServerProviderSlashCommand>;
+  readonly usage?: NonNullable<ClaudeCapabilitiesProbe["usage"]>;
 };
 
 function claudeCapabilities(overrides: Partial<TestClaudeCapabilities> = {}) {
@@ -2312,6 +2313,10 @@ it.layer(
             tokenSource: "none",
             apiKeySource: "none",
             apiProvider: "firstParty",
+            usage: {
+              rate_limits_available: true,
+              rate_limits: { five_hour: { utilization: 1, resets_at: null } },
+            },
           }),
           environment,
         );
@@ -2319,6 +2324,8 @@ it.layer(
         assert.strictEqual(status.auth.status, "authenticated");
         assert.strictEqual(status.auth.type, "customEndpoint");
         assert.strictEqual(status.auth.label, "Custom API endpoint");
+        assert.strictEqual(status.usageLimits?.unavailable?.reason, "unsupported");
+        assert.deepStrictEqual(status.usageLimits?.windows, []);
       }).pipe(
         Effect.provide(
           layerMockSpawner((args) => {
