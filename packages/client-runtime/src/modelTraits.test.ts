@@ -52,6 +52,24 @@ describe("buildTraitsTriggerDisplay gauge", () => {
     expect(gauge).toEqual({ reasoning: { level: 5, levels: 6 }, speed: "fast" });
   });
 
+  it("ranks efforts by strength when the provider lists them strongest first", () => {
+    const { gauge } = buildTraitsTriggerDisplay({
+      provider: ProviderDriverKind.make("grok"),
+      descriptors: [
+        {
+          id: "reasoningEffort",
+          label: "Reasoning",
+          type: "select",
+          currentValue: "xhigh",
+          options: ["xhigh", "high", "medium", "low"].map((id) => ({ id, label: id })),
+        },
+      ],
+      primarySelectDescriptorId: "reasoningEffort",
+      ultrathinkPromptControlled: false,
+    });
+    expect(gauge.reasoning).toEqual({ level: 3, levels: 4 });
+  });
+
   it("has no reasoning level when the model offers none", () => {
     const { gauge } = buildTraitsTriggerDisplay({
       provider: ProviderDriverKind.make("codex"),

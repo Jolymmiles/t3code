@@ -103,6 +103,25 @@ export function getTraitSelectChange(
   };
 }
 
+const EFFORT_SCALE = [
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+  "ultra",
+  "ultrathink",
+];
+
+// Some providers (Grok over ACP) list efforts strongest first; fall back to menu order for unknown ids.
+function orderByEffort<T extends { readonly id: string }>(options: ReadonlyArray<T>) {
+  return options.every((option) => EFFORT_SCALE.includes(option.id))
+    ? [...options].sort((a, b) => EFFORT_SCALE.indexOf(a.id) - EFFORT_SCALE.indexOf(b.id))
+    : options;
+}
+
 export interface TraitsGauge {
   readonly reasoning: { readonly level: number; readonly levels: number } | null;
   readonly speed: "fast" | "ultrafast" | null;
@@ -164,7 +183,7 @@ export function buildTraitsTriggerDisplay(input: {
               input.modelSelection,
               input.reportedModelSelection,
             );
-      const level = descriptor.options.findIndex((option) => option.id === value);
+      const level = orderByEffort(descriptor.options).findIndex((option) => option.id === value);
       if (level >= 0) reasoning = { level, levels: descriptor.options.length };
     }
     const label =
